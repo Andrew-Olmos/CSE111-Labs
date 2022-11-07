@@ -107,7 +107,7 @@ def populateTable(_conn):
 
     print("++++++++++++++++++++++++++++++++++")
 
-
+#Q1 Done
 def Q1(_conn):
     print("++++++++++++++++++++++++++++++++++")
     print("Q1")
@@ -119,51 +119,102 @@ def Q1(_conn):
         ORDER BY w_warehousekey
         """)
     myCur = cur.fetchall()
-
-    f = open('1.out', 'w')
+    f = open('output/1.out', 'w')
+    f.write("{:>10} {:>10} {:>40} {:>10} {:>10} \n".format("wId", "wName", "wCap", "sId", "nId"))
     for i in myCur:
-        j = ("{:>10} {:>10} {:>30}".format(i[0], i[1], i[2], i[3], i[4]))
-        print(j)
+        j = ("{:>10} {:>10} {:>20} {:>10} {:>10} \n".format(i[0], i[1], i[2], i[3], i[4]))
         f.write(j)
     f.close()
         
         
     print("++++++++++++++++++++++++++++++++++")
 
-
+#Q2 Done
 def Q2(_conn):
     print("++++++++++++++++++++++++++++++++++")
     print("Q2")
 
     cur = _conn.cursor()
     cur.execute(f"""
-        SELECT n_name, COUNT(warehouse.w_warehousekey), SUM(warehouse.w_capacity)
+        SELECT n_name, COUNT(w_warehousekey), SUM(w_capacity)
         FROM nation, warehouse
-        WHERE 
-            n_nationkey = w_nationkey
-        """)
+        WHERE
+            w_nationkey = n_nationkey 
+        GROUP BY n_name
+        ORDER BY COUNT(w_warehousekey) DESC, SUM(w_capacity) DESC;""")
     myCur = cur.fetchall()
 
-    f = open('2.out', 'w')
+    f = open('output/2.out', 'w')
+    f.write("{:>10} {:>10} {:>30} \n".format("nation", "numW", "totCap"))
     for i in myCur:
-        j = ("{:>10} {:>10} {:>30}".format(i[0], i[1], i[2]))
+        j = ("{:>10} {:>10} {:>30} \n".format(i[0], i[1], i[2]))
+        #print(j)
+        f.write(j)
+    f.close()
+
+    print("++++++++++++++++++++++++++++++++++")
+
+#Q3 Done
+def Q3(_conn):
+    print("++++++++++++++++++++++++++++++++++")
+    print("Q3")
+    
+    with open("input/3.in","r") as g:
+        nation = g.read()
+    cur = _conn.cursor()
+    cur.execute(f'''
+        SELECT s_name, N2.n_name, w_name
+        FROM supplier, nation N1, nation N2, warehouse, region
+        WHERE
+            N1.n_regionkey = r_regionkey AND
+            s_suppkey = w_suppkey AND
+            w_nationkey = N1.n_nationkey AND
+            s_nationkey = N2.n_nationkey AND
+            N1.n_name = '{nation}'
+        ''')
+    myCur = cur.fetchall()
+
+    f = open('output/3.out', 'w')
+    f.write("{:>0} {:>20} {:>20} \n".format("supplier", "nation", "warehouse"))
+    for i in myCur:
+        j = ("{:>10} {:>10} {:>30} \n".format(i[0], i[1], i[2]))
         print(j)
         f.write(j)
     f.close()
 
     print("++++++++++++++++++++++++++++++++++")
 
-
-def Q3(_conn):
-    print("++++++++++++++++++++++++++++++++++")
-    print("Q3")
-
-    print("++++++++++++++++++++++++++++++++++")
-
-
+#Q4 done, figure out writing inputs
 def Q4(_conn):
     print("++++++++++++++++++++++++++++++++++")
     print("Q4")
+    
+    for i in (0,2):    
+        with open("input/3.in","r") as g:
+            nation = g.readline()
+            capacity = g.readline()
+    print(nation)
+    cur = _conn.cursor()
+    cur.execute(f'''
+        SELECT w_name, w_capacity
+        FROM warehouse, region, nation
+        WHERE
+            r_name = '{nation}' AND
+            r_regionkey = n_regionkey AND
+            n_nationkey = w_nationkey
+        GROUP BY w_name
+        HAVING w_capacity > '{capacity}'
+        ORDER BY w_capacity DESC
+        ''')
+    myCur = cur.fetchall()
+
+    f = open('output/4.out', 'w')
+    f.write("{:>10} {:>40}\n".format("warehouse", "capacity"))
+    for i in myCur:
+        j = ("{:>10} {:>20} \n".format(i[0], i[1]))
+        print(j)
+        f.write(j)
+    f.close()
 
     print("++++++++++++++++++++++++++++++++++")
 
@@ -171,6 +222,31 @@ def Q4(_conn):
 def Q5(_conn):
     print("++++++++++++++++++++++++++++++++++")
     print("Q5")
+    
+    with open("input/5.in","r") as g:
+        nation = g.read().splitlines()
+    #print(nation)
+    cur = _conn.cursor()
+    cur.execute(f'''
+        SELECT w_name, w_capacity
+        FROM warehouse, region, nation
+        WHERE
+            r_name = 'ASIA' AND
+            r_regionkey = n_regionkey AND
+            n_nationkey = w_nationkey
+        GROUP BY w_name
+        HAVING w_capacity > 2000
+        ORDER BY w_capacity DESC
+        ''')
+    myCur = cur.fetchall()
+
+    f = open('output/4.out', 'w')
+    f.write("{:>10} {:>40}\n".format("warehouse", "capacity"))
+    for i in myCur:
+        j = ("{:>10} {:>20} \n".format(i[0], i[1]))
+        #print(j)
+        f.write(j)
+    f.close()
 
     print("++++++++++++++++++++++++++++++++++")
 
@@ -185,11 +261,11 @@ def main():
         createTable(conn)
         populateTable(conn)
 
-       # Q1(conn)
+        Q1(conn)
         Q2(conn)
-       #Q3(conn)
+        Q3(conn)
         #Q4(conn)
-        #Q5(conn)
+        Q5(conn)
 
     closeConnection(conn, database)
 
